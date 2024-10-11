@@ -10,5 +10,13 @@
     {
       "path": "./tsconfig.vitest.json"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "composite": true, // Required for project references
+    "skipLibCheck": true, // Skip type checking of declaration files for faster compilation
+    "baseUrl": "./src", // Base URL for module resolution
+    "paths": {
+      "@/*": ["*"] // Alias @ to src directory
+    }
+  }
 }

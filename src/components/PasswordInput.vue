@@ -9,9 +9,6 @@
         :type="showPassword ? 'text' : 'password'"
         :id="id"
         :name="name"
-        v-model="modelValue"
-        @input="handleInput"
-        @blur="validateField"
         :placeholder="placeholder"
         :class="[
           'peer shadow-md border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight transition-all duration-300 ease-in-out focus:outline-none',
@@ -20,6 +17,9 @@
             : 'border-gray-300 bg-white placeholder-gray-400',
           'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
         ]"
+        v-model="inputValue"
+        @input="handleInput"
+        @blur="validateField"
         ref="inputRef"
       />
 
@@ -78,10 +78,14 @@
   </div>
 </template>
 
-<script lang="js">
-import ErrorMessage from "./ErrorMessage.vue";
+<script lang="ts">
+import { defineComponent, ref, computed } from "vue";
+import ErrorMessage from "@/components/ErrorMessage.vue";
 
-export default {
+export default defineComponent({
+  components: {
+    ErrorMessage,
+  },
   props: {
     modelValue: {
       type: String,
@@ -112,15 +116,13 @@ export default {
       default: "",
     },
   },
-  data() {
-    return {
-      showPassword: false,
-      strength: "",
-    };
-  },
-  computed: {
-    strengthText() {
-      switch (this.strength) {
+  setup(props) {
+    const showPassword = ref(false);
+    const inputValue = ref(props.modelValue);
+    const strength = ref("");
+
+    const strengthText = computed(() => {
+      switch (strength.value) {
         case "weak":
           return "Weak";
         case "medium":
@@ -130,9 +132,10 @@ export default {
         default:
           return "";
       }
-    },
-    strengthColor() {
-      switch (this.strength) {
+    });
+
+    const strengthColor = computed(() => {
+      switch (strength.value) {
         case "weak":
           return "text-red-600";
         case "medium":
@@ -142,9 +145,10 @@ export default {
         default:
           return "";
       }
-    },
-    strengthBarColor() {
-      switch (this.strength) {
+    });
+
+    const strengthBarColor = computed(() => {
+      switch (strength.value) {
         case "weak":
           return "bg-red-600";
         case "medium":
@@ -154,9 +158,10 @@ export default {
         default:
           return "";
       }
-    },
-    strengthPercentage() {
-      switch (this.strength) {
+    });
+
+    const strengthPercentage = computed(() => {
+      switch (strength.value) {
         case "weak":
           return "33%";
         case "medium":
@@ -166,43 +171,56 @@ export default {
         default:
           return "0%";
       }
-    },
-  },
-  methods: {
-    togglePassword() {
-      this.showPassword = !this.showPassword;
-    },
-    validateField() {
-      this.$emit("validate", this.id);
-    },
-    sanitizeInput(input) {
+    });
+
+    const togglePassword = () => {
+      showPassword.value = !showPassword.value;
+    };
+
+    const validateField = () => {
+      // Emit validation event (optional)
+    };
+
+    const sanitizeInput = (input: string): string => {
       return input.replace(
-        /[^a-zA-Z0-9!@#$%^&*()_+~`-={}|[\]\\:";'<>?,.\/]/g,
+        /[^a-zA-Z0-9!@#$%^&*()_+~`=\-{}|[\]\\:";'<>?,./]/g,
         "",
-      );
-    },
-    handleInput(event) {
-      const sanitizedInput = this.sanitizeInput(event.target.value);
-      this.modelValue = sanitizedInput;
-      this.$emit("update:modelValue", sanitizedInput);
-      this.validatePassword();
-    },
-    validatePassword() {
-      const password = this.modelValue;
+      ); // Corrected regex
+    };
+
+    const handleInput = (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const sanitizedInput = sanitizeInput(target.value);
+      inputValue.value = sanitizedInput;
+      validatePassword();
+    };
+
+    const validatePassword = () => {
+      const password = inputValue.value;
       if (password.length < 6) {
-        this.strength = "weak";
+        strength.value = "weak";
       } else if (password.length < 10) {
-        this.strength = "medium";
+        strength.value = "medium";
       } else {
-        this.strength = "strong";
+        strength.value = "strong";
       }
-      this.validateField();
-    },
+      validateField();
+    };
+
+    return {
+      showPassword,
+      inputValue,
+      strength,
+      strengthText,
+      strengthColor,
+      strengthBarColor,
+      strengthPercentage,
+      togglePassword,
+      handleInput,
+      validateField,
+    };
   },
-  components: {
-    ErrorMessage,
-  },
-};
+});
 </script>
 
 <style scoped>
